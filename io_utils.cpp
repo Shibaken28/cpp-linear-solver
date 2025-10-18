@@ -4,8 +4,7 @@
 #include <stdexcept>
 #include <vector>
 
-Eigen::SparseMatrix<double> readSparseMatrixFromFile(
-    const std::string& filename) {
+Eigen::SparseMatrix<double> read_sparse_matrix(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         throw std::runtime_error("Error: Could not open file " + filename);
