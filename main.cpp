@@ -1,14 +1,13 @@
 // ファイル名: main.cpp
 
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include <iomanip>
 #include <iostream>
+#include <random>
 #include <vector>
 
 #include "io_utils.hpp"
-
-// 密行列(MatrixXd)と疎行列(SparseMatrix)の両方をインクルード
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
 
 using namespace std;
 using namespace Eigen;
@@ -18,23 +17,28 @@ void block_bicgstab_eigen(const SparseMatrix<double>& A, const MatrixXd& B,
                           MatrixXd& X);
 
 int main() {
-    auto A = read_sparse_matrix("matrix/494_bus.mtx");
+    auto A = read_sparse_matrix("matrix/1138_bus.mtx");
     int n = A.rows();
-    int col = 3;  // 複数の右辺を同時に解くための列数
+    vector<int> test_cols = {1, 3, 5, 7, 9};
+    cout << test_cols.size() << endl;
+    for (int col : test_cols) {
+        // BとXは密な行列なので、MatrixXdのまま
+        cout << col << endl;
 
-    // BとXは密な行列なので、MatrixXdのまま
-    MatrixXd B = MatrixXd::Zero(n, col);
-    for (int i = 0; i < n * col; ++i) {
-        B(i) = (double)(i * i);
+        MatrixXd B = MatrixXd::Zero(n, col);
+        unsigned int fixed_seed = 42;
+        std::mt19937 gen(fixed_seed);  // メルセンヌ・ツイスターエンジン
+        // 3. 浮動小数点数の分布を設定
+        //    0.0から1.0までの一様分布
+        std::uniform_real_distribution<double> real_dist(0.0, 1.0);
+        for (int i = 0; i < n * col; ++i) {
+            B(i) = real_dist(gen);
+        }
+        MatrixXd X = MatrixXd::Zero(n, col);
+
+        // 疎行列を引数として関数を呼び出す
+        block_bicgstab_eigen(A, B, X);
     }
-    MatrixXd X = MatrixXd::Zero(n, col);
-
-    // 疎行列を引数として関数を呼び出す
-    block_bicgstab_eigen(A, B, X);
-
-    cout << "\n--- Solution ---" << endl;
-    // cout << "Matrix X (Solution):\n" << X << endl; //
-    // 大きいのでコメントアウト
 
     return 0;
 }
@@ -48,8 +52,10 @@ void block_bicgstab_eigen(const SparseMatrix<double>& A, const MatrixXd& B,
     MatrixXd R_hat_zero = R;
     MatrixXd R_zero = R;
 
+    vector<double> res_norms;
+
     double tol = 1e-10;
-    int max_iter = 10000;
+    int max_iter = 1000;
     double b_norm = B.norm();
     if (b_norm == 0.0) b_norm = 1.0;
 
@@ -83,11 +89,9 @@ void block_bicgstab_eigen(const SparseMatrix<double>& A, const MatrixXd& B,
 
         // 8. 収束判定
         double r_norm = R.norm();
-        cout << "反復回数 " << i + 1 << ": 残差ノルム |R|/|B| = " << scientific
-             << setprecision(6) << r_norm / b_norm << endl;
+        res_norms.push_back(r_norm / b_norm);
 
         if (r_norm / b_norm < tol) {
-            cout << i + 1 << "回の反復収束" << endl;
             break;
         }
 
@@ -101,6 +105,14 @@ void block_bicgstab_eigen(const SparseMatrix<double>& A, const MatrixXd& B,
 
     // --- 検算 ---
     double final_res_norm = (B - A * X).norm();
-    cout << "\n真の残差 ||B - AX||: " << scientific << setprecision(6)
+    cerr << "反復回数: " << res_norms.size()
+         << " 真の残差 ||B - AX||: " << scientific << setprecision(6)
          << final_res_norm / b_norm << endl;
+
+    // --- 収束履歴の出力 ---
+    cout << res_norms.size() << endl;
+    for (size_t i = 0; i < res_norms.size(); i++) {
+        // cout << scientific << setprecision(6) << res_norms[i] << endl;
+        cout << fixed << setprecision(20) << res_norms[i] << endl;
+    }
 }

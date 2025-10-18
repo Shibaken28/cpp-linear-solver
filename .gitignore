@@ -4,3 +4,5 @@
 !*.hpp
 !README.md
 !.gitignore
+!*.py
+!matrix/*.mtx
