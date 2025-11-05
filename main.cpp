@@ -16,6 +16,7 @@ using namespace Eigen;
 void block_bicgstab_eigen(const SparseMatrix<double>& A, const MatrixXd& B,
                           MatrixXd& X);
 
+// pdeが解きやすい
 int main() {
     auto A = read_sparse_matrix("matrix/1138_bus.mtx");
     int n = A.rows();
@@ -58,6 +59,8 @@ void block_bicgstab_eigen(const SparseMatrix<double>& A, const MatrixXd& B,
     int max_iter = 1000;
     double b_norm = B.norm();
     if (b_norm == 0.0) b_norm = 1.0;
+
+    res_norms.push_back(R.norm() / b_norm);
 
     for (int i = 0; i < max_iter; i++) {
         // --- 計算ループの中身は、密行列版とほぼ同じ ---
