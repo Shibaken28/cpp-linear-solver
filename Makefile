@@ -1,31 +1,71 @@
-# --- Compiler and General Flags ---
-CXX = clang++
-CXXFLAGS = -std=c++17 -Wall -g
+# ==========================================
+# 設定
+# ==========================================
+CXX      = g++
 
-# --- Library Paths (for macOS with Homebrew) ---
+# --- ライブラリ設定 (Eigen) ---
+# HomebrewでインストールされたEigenのパスを取得
 EIGEN_PATH = $(shell brew --prefix eigen)
-CXXFLAGS += -I$(EIGEN_PATH)/include/eigen3
 
-# --- Project Files ---
-TARGET = main_program
-SRCS = main.cpp io_utils.cpp
+# インクルードパスの設定
+# 1. 自作コードのディレクトリ (src/common, src/algo)
+# 2. Eigenのディレクトリ (brewのパス/include/eigen3)
+INCLUDES = -Isrc -I$(EIGEN_PATH)/include/eigen3
 
-# --- Build Rules ---
-.PHONY: all clean clangd
+CXXFLAGS = -Wall -O2 -std=c++17 $(INCLUDES)
 
-all: $(TARGET)
+SRC_DIR = src
+OBJ_DIR = obj
+BIN_DIR = bin
 
-$(TARGET): $(SRCS)
-	@echo "Compiling and linking all sources..."
+# ==========================================
+# 自動検出ロジック
+# ==========================================
+
+# 1. ロジック（共通処理など）の全ファイルを検出
+#    common, algo, algo_xxx などのディレクトリ内の.cppを全て拾います
+LOGIC_SRCS = $(wildcard $(SRC_DIR)/common/*.cpp) \
+             $(wildcard $(SRC_DIR)/algo/*.cpp) \
+             $(wildcard $(SRC_DIR)/algo_*/*.cpp)
+
+LOGIC_OBJS = $(LOGIC_SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+
+# 2. メイン関数のファイルを検出
+MAIN_SRCS = $(wildcard $(SRC_DIR)/main/*.cpp)
+
+# 3. 生成すべき実行ファイルのパスを自動計算
+#    src/main/xxx.cpp -> bin/xxx
+TARGETS = $(patsubst $(SRC_DIR)/main/%.cpp, $(BIN_DIR)/%, $(MAIN_SRCS))
+
+# 4. エイリアス用（make io_sample で呼べるようにするため）
+PROGRAM_NAMES = $(notdir $(TARGETS))
+
+# ==========================================
+# ビルドターゲット
+# ==========================================
+
+all: $(TARGETS)
+
+# コマンド名短縮用 (make io_sample)
+$(PROGRAM_NAMES): %: $(BIN_DIR)/%
+
+.PHONY: all clean $(PROGRAM_NAMES)
+
+# ==========================================
+# ルール定義
+# ==========================================
+
+# ★汎用リンクルール★
+# メインの.o と ロジック全部入り.o をリンクして実行ファイルを作る
+$(BIN_DIR)/%: $(OBJ_DIR)/main/%.o $(LOGIC_OBJS)
+	@mkdir -p $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-clangd:
-	@echo "Generating compile_flags.txt for clangd..."
-	@echo "$(CXXFLAGS)" | tr ' ' '\n' > compile_flags.txt
-	@echo "Done."
+# .cpp -> .o のコンパイルルール
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# クリーンアップ
 clean:
-	@echo "Cleaning up..."
-	@# 実行ファイルと、OSが作る可能性のあるデバッグ用フォルダを削除
-	rm -f $(TARGET)
-	rm -rf $(TARGET).dSYM
+	rm -rf $(OBJ_DIR) $(BIN_DIR)

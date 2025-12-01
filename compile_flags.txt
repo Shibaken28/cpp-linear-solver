@@ -1,0 +1,5 @@
+-std=c++17
+-Wall
+-g
+-I/opt/homebrew/opt/eigen/include/eigen3
+-Isrc
