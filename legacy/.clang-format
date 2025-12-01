@@ -1,0 +1,11 @@
+# .clang-format
+---
+# ベースとするスタイル (Google, LLVM, WebKit, Microsoft, Mozillaなど)
+BasedOnStyle: Google
+
+# インデントの幅
+IndentWidth: 4
+
+# 1行の最大文字数
+ColumnLimit: 80
+
