@@ -1,18 +1,17 @@
 #include "algo/block_bicgstab.hpp"
 
 using namespace std;
-#include <iomanip>
-#include <iostream>
 #include <vector>
 
 MatrixXd block_bicgstab(const SparseMatrix<double>& A, const MatrixXd& B,
-                        MatrixXd X, int max_iter, double tol) {
+                        MatrixXd X, int max_iter, double tol,
+                        vector<double>& res_norms) {
     MatrixXd R = B - A * X;
     MatrixXd P = R;
     MatrixXd R_hat_zero = R;
     MatrixXd R_zero = R;
 
-    vector<double> res_norms;
+    res_norms.clear();
 
     double b_norm = B.norm();
     if (b_norm == 0.0) b_norm = 1.0;
@@ -62,11 +61,5 @@ MatrixXd block_bicgstab(const SparseMatrix<double>& A, const MatrixXd& B,
         // 10. P_{k+1} = R_{k+1} + (P_k - zeta*AP_k)*beta
         P = R + (P - zeta * AP) * beta;
     }
-
-    // --- 検算 ---
-    double final_res_norm = (B - A * X).norm();
-    cerr << "反復回数: " << res_norms.size()
-         << " 真の残差 ||B - AX||: " << scientific << setprecision(6)
-         << final_res_norm / b_norm << endl;
     return X;
 }

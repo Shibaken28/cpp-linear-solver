@@ -7,14 +7,15 @@ using namespace std;
 #include <vector>
 
 MatrixXd block_bicgstab_rq(const SparseMatrix<double>& A, const MatrixXd& B,
-                           MatrixXd X, int max_iter, double tol) {
+                           MatrixXd X, int max_iter, double tol,
+                           vector<double>& res_norms) {
     MatrixXd R0 = B - A * X;
     MatrixXd R, eta;
     CholeskyQR(R0, R, eta);
     MatrixXd R0_tilde = R0;
     MatrixXd P = R;
 
-    vector<double> res_norms;
+    res_norms.clear();
 
     double b_norm = B.norm();
     if (b_norm == 0.0) b_norm = 1.0;
@@ -69,11 +70,5 @@ MatrixXd block_bicgstab_rq(const SparseMatrix<double>& A, const MatrixXd& B,
             break;
         }
     }
-
-    // --- 検算 ---
-    double final_res_norm = (B - A * X).norm();
-    cerr << "反復回数: " << res_norms.size()
-         << " 真の残差 ||B - AX||: " << scientific << setprecision(6)
-         << final_res_norm / b_norm << endl;
     return X;
 }

@@ -1,0 +1,101 @@
+使用する行列: in/matrix/pde900.mtx
+行列のサイズ: 900 x 900
+=== 列数: 1 ===
+Block BiCGSTAB法 + QR分解安定化
+反復回数: 85
+相対誤差: ||B-AX||/||B|| = 3.98846e-11
+
+Block BiCGSTAB法 + 不完全コレスキー分解前処理 + QR分解安定化
+反復回数: 10
+相対誤差: ||B-AX||/||B|| = 1.65205e-11
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復100回or1e-5誤差
+反復回数: 1
+相対誤差: ||B-AX||/||B|| = 1.93596e-11
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復300回or1e-5誤差
+反復回数: 1
+相対誤差: ||B-AX||/||B|| = 1.93596e-11
+
+=== 列数: 5 ===
+Block BiCGSTAB法 + QR分解安定化
+反復回数: 60
+相対誤差: ||B-AX||/||B|| = 4.31024e-11
+
+Block BiCGSTAB法 + 不完全コレスキー分解前処理 + QR分解安定化
+反復回数: 8
+相対誤差: ||B-AX||/||B|| = 7.71391e-11
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復100回or1e-5誤差
+反復回数: 1
+相対誤差: ||B-AX||/||B|| = 7.93429e-12
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復300回or1e-5誤差
+反復回数: 1
+相対誤差: ||B-AX||/||B|| = 7.93429e-12
+
+=== 列数: 10 ===
+Block BiCGSTAB法 + QR分解安定化
+反復回数: 47
+相対誤差: ||B-AX||/||B|| = 2.88439e-12
+
+Block BiCGSTAB法 + 不完全コレスキー分解前処理 + QR分解安定化
+反復回数: 7
+相対誤差: ||B-AX||/||B|| = 8.69584e-11
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復100回or1e-5誤差
+反復回数: 1
+相対誤差: ||B-AX||/||B|| = 5.93133e-11
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復300回or1e-5誤差
+反復回数: 1
+相対誤差: ||B-AX||/||B|| = 5.93133e-11
+
+=== 列数: 20 ===
+Block BiCGSTAB法 + QR分解安定化
+反復回数: 35
+相対誤差: ||B-AX||/||B|| = 2.33012e-11
+
+Block BiCGSTAB法 + 不完全コレスキー分解前処理 + QR分解安定化
+反復回数: 7
+相対誤差: ||B-AX||/||B|| = 6.06673e-11
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復100回or1e-5誤差
+反復回数: 1
+相対誤差: ||B-AX||/||B|| = 3.18994e-11
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復300回or1e-5誤差
+反復回数: 1
+相対誤差: ||B-AX||/||B|| = 3.18994e-11
+
+=== 列数: 50 ===
+Block BiCGSTAB法 + QR分解安定化
+反復回数: 19
+相対誤差: ||B-AX||/||B|| = 1.41409e-12
+
+Block BiCGSTAB法 + 不完全コレスキー分解前処理 + QR分解安定化
+反復回数: 6
+相対誤差: ||B-AX||/||B|| = 4.79979e-12
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復100回or1e-5誤差
+コレスキー分解失敗
+反復回数: 0
+相対誤差: ||B-AX||/||B|| = 2.3884e-11
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復300回or1e-5誤差
+コレスキー分解失敗
+反復回数: 0
+相対誤差: ||B-AX||/||B|| = 2.3884e-11
+
+=== 列数: 100 ===
+Block BiCGSTAB法 + QR分解安定化
+反復回数: 11
+相対誤差: ||B-AX||/||B|| = 2.58281e-12
+
+Block BiCGSTAB法 + 不完全コレスキー分解前処理 + QR分解安定化
+反復回数: 5
+相対誤差: ||B-AX||/||B|| = 4.17489e-11
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復100回or1e-5誤差
+コレスキー分解失敗
+Assertion failed: (lhs.cols() == rhs.rows() && "invalid matrix product" && "if you wanted a coeff-wise or a dot product use the respective explicit functions"), function Product, file Product.h, line 98.

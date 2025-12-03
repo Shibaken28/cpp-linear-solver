@@ -2,22 +2,21 @@
 #include "common/cholesky.hpp"
 
 using namespace std;
-#include <iomanip>
 #include <iostream>
 #include <vector>
 
 MatrixXd block_bicgstab_dynamic_preprocessing(const SparseMatrix<double>& A,
                                               const MatrixXd& B, MatrixXd X,
-                                              int max_iter = 1000,
-                                              double tol = 1e-15) {
+                                              int max_iter, double tol,
+                                              vector<double>& res_norms,
+                                              int inner_max_iter,
+                                              float inner_tol) {
     MatrixXd R = B - A * X;
     MatrixXd P = R;
     MatrixXd R_hat_zero = R;
     MatrixXd R_zero = R;
 
-    // Aの逆行列に近い行列Kを事前計算
-
-    vector<double> res_norms;
+    res_norms.clear();
 
     double b_norm = B.norm();
     if (b_norm == 0.0) b_norm = 1.0;
@@ -28,6 +27,7 @@ MatrixXd block_bicgstab_dynamic_preprocessing(const SparseMatrix<double>& A,
     MatrixXf Zero_float =
         MatrixXf::Zero(A.cols(), P.cols());  // float型のゼロ行列
 
+    vector<float> dummy_res_norms;
     for (int i = 0; i < max_iter; i++) {
         // --- 計算ループの中身は、密行列版とほぼ同じ ---
 
@@ -35,7 +35,8 @@ MatrixXd block_bicgstab_dynamic_preprocessing(const SparseMatrix<double>& A,
         // K^-1の代わりにA^{-1}だと思うと，
         // Az = P と解くと z = A^{-1}P になる
         MatrixXd K_inv_P =
-            block_bicgstab_float(A_float, P.cast<float>(), Zero_float, 20, 1e-5)
+            block_bicgstab_float(A_float, P.cast<float>(), Zero_float,
+                                 inner_max_iter, inner_tol, dummy_res_norms)
                 .cast<double>();
 
         // 1. A*P (疎行列 * 密行列 -> 密行列)
@@ -50,7 +51,8 @@ MatrixXd block_bicgstab_dynamic_preprocessing(const SparseMatrix<double>& A,
         MatrixXd T = R - AKP * alpha;
 
         MatrixXd K_inv_T =
-            block_bicgstab_float(A_float, T.cast<float>(), Zero_float, 20, 1e-5)
+            block_bicgstab_float(A_float, T.cast<float>(), Zero_float,
+                                 inner_max_iter, inner_tol, dummy_res_norms)
                 .cast<double>();
 
         // 4. A*T (疎行列 * 密行列 -> 密行列)
@@ -82,13 +84,108 @@ MatrixXd block_bicgstab_dynamic_preprocessing(const SparseMatrix<double>& A,
         // 10. P_{k+1} = R_{k+1} + (P_k - zeta*AP_k)*beta
         P = R + (P - zeta * AKP) * beta;
     }
+    return X;
+}
 
-    // 残差を出す
-    auto R1 = B - A * X;
-    double rel_res_norm = R1.norm() / B.norm();
-    cerr << "反復回数: " << res_norms.size() - 1
-         << ", ||B-AX||/||B|| = " << scientific << setprecision(6)
-         << rel_res_norm << endl;
+MatrixXd block_bicgstab_dynamic_preprocessing_rq(const SparseMatrix<double>& A,
+                                                 const MatrixXd& B, MatrixXd X,
+                                                 int max_iter, double tol,
+                                                 vector<double>& res_norms,
+                                                 int inner_max_iter,
+                                                 float inner_tol) {
+    MatrixXd R0 = B - A * X;
+    MatrixXd R, eta;
+    if (!CholeskyQR(R0, R, eta)) {
+        return X;
+    }
+    MatrixXd R0_tilde = R0;
+    MatrixXd P = R;
+
+    Eigen::SparseMatrix<float> A_float = A.cast<float>();
+
+    res_norms.clear();
+
+    double b_norm = B.norm();
+    if (b_norm == 0.0) b_norm = 1.0;
+
+    res_norms.push_back(eta.norm() / b_norm);
+
+    vector<double> dummy_res_norms;
+    for (int i = 0; i < max_iter; i++) {
+        // APを計算
+        /*
+        MatrixXd K_inv_P =
+            block_bicgstab_float_rq(A_float, P.cast<float>(),
+                                    MatrixXf::Zero(A.cols(), P.cols()),
+                                    inner_max_iter, inner_tol, dummy_res_norms)
+                .cast<double>();
+        */
+        MatrixXd K_inv_P =
+            block_bicgstab_rq(A, P, MatrixXd::Zero(A.cols(), P.cols()),
+                              inner_max_iter, inner_tol, dummy_res_norms);
+        MatrixXd AKP = A * K_inv_P;
+
+        // alphaの計算
+        MatrixXd R0_tilde_T_A_P = R0_tilde.transpose() * AKP;
+        MatrixXd R0_tilde_R = R0_tilde.transpose() * R;
+        MatrixXd alpha = R0_tilde_T_A_P.lu().solve(R0_tilde_R);
+        // MatrixXd alpha =
+        // MatrixXd(R0_tilde_T_A_P).fullPivLu().solve(R0_tilde_R);
+
+        // Tの計算
+        MatrixXd T = R - AKP * alpha;
+
+        // ATの計算
+        /*
+        MatrixXd K_inv_T =
+            block_bicgstab_float_rq(A_float, T.cast<float>(),
+                                    MatrixXf::Zero(A.cols(), T.cols()),
+                                    inner_max_iter, inner_tol, dummy_res_norms)
+                .cast<double>();
+        */
+        MatrixXd K_inv_T =
+            block_bicgstab_rq(A, T, MatrixXd::Zero(A.cols(), T.cols()),
+                              inner_max_iter, inner_tol, dummy_res_norms);
+        MatrixXd AKT = A * K_inv_T;
+
+        // 5. zetaの計算
+        MatrixXd Teta = T * eta;
+        MatrixXd ATeta = AKT * eta;
+        double tr_AT_T = (ATeta.array() * Teta.array()).sum();
+        double tr_AT_AT = (ATeta.array() * ATeta.array()).sum();
+        double zeta = (tr_AT_AT != 0.0) ? (tr_AT_T / tr_AT_AT) : 0.0;
+
+        // Xの更新
+        X += (K_inv_P * alpha + zeta * K_inv_T) * eta;
+
+        // R tauの計算
+        MatrixXd R1;  // 次のR
+        MatrixXd tau;
+        MatrixXd t = T - zeta * A * K_inv_T;
+        if (!CholeskyQR(t, R1, tau)) {
+            break;
+        }
+
+        // betaの計算
+        MatrixXd R0_tilde_T_AP = R0_tilde.transpose() * AKP;
+        MatrixXd R0_tilde_T_R1 = R0_tilde.transpose() * R1;
+        MatrixXd beta = (R0_tilde_T_AP * zeta).lu().solve(R0_tilde_T_R1);
+
+        P = R1 + (P - zeta * AKP) * beta;
+        R = R1;
+        eta = tau * eta;
+
+        double eta_norm = eta.norm();
+        res_norms.push_back(eta_norm / b_norm);
+        if (eta_norm / b_norm < tol) {
+            break;
+        }
+        // あまりにも発散している場合(最初のres_normの1e4倍以上)は終了
+        if (res_norms.back() > res_norms[0] * 1e4) {
+            cerr << "発散を検出したため終了します。" << endl;
+            break;
+        }
+    }
 
     return X;
 }

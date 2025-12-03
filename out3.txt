@@ -1,0 +1,68 @@
+使用する行列: in/matrix/cz5108.mtx
+行列のサイズ: 5108 x 5108
+=== 列数: 1 ===
+Block BiCGSTAB法 + QR分解安定化
+反復回数: 3000
+相対誤差: ||B-AX||/||B|| = 6.29363e-07
+
+Block BiCGSTAB法 + 不完全コレスキー分解前処理 + QR分解安定化
+反復回数: 3000
+相対誤差: ||B-AX||/||B|| = 10.0959
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復100回or1e-5誤差
+反復回数: 3000
+相対誤差: ||B-AX||/||B|| = 0.00186656
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復300回or1e-5誤差
+発散を検出したため終了します。
+反復回数: 417
+相対誤差: ||B-AX||/||B|| = 182378
+
+=== 列数: 5 ===
+Block BiCGSTAB法 + QR分解安定化
+反復回数: 1172
+相対誤差: ||B-AX||/||B|| = 4.63528e-10
+
+Block BiCGSTAB法 + 不完全コレスキー分解前処理 + QR分解安定化
+反復回数: 3000
+相対誤差: ||B-AX||/||B|| = 1.63357e+65
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復100回or1e-5誤差
+発散を検出したため終了します。
+反復回数: 33
+相対誤差: ||B-AX||/||B|| = 10334.9
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復300回or1e-5誤差
+反復回数: 2
+相対誤差: ||B-AX||/||B|| = 1.82441e-11
+
+=== 列数: 10 ===
+Block BiCGSTAB法 + QR分解安定化
+反復回数: 296
+相対誤差: ||B-AX||/||B|| = 1.02432e-10
+
+Block BiCGSTAB法 + 不完全コレスキー分解前処理 + QR分解安定化
+反復回数: 3000
+相対誤差: ||B-AX||/||B|| = nan
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復100回or1e-5誤差
+発散を検出したため終了します。
+反復回数: 14
+相対誤差: ||B-AX||/||B|| = 34923.9
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復300回or1e-5誤差
+反復回数: 1
+相対誤差: ||B-AX||/||B|| = 7.59193e-11
+
+=== 列数: 20 ===
+Block BiCGSTAB法 + QR分解安定化
+反復回数: 134
+相対誤差: ||B-AX||/||B|| = 8.31835e-11
+
+Block BiCGSTAB法 + 不完全コレスキー分解前処理 + QR分解安定化
+反復回数: 3000
+相対誤差: ||B-AX||/||B|| = 2.48114e+85
+
+Block BiCGSTAB法 + 可変前処理 + QR分解安定化 内部反復100回or1e-5誤差
+コレスキー分解失敗
+Assertion failed: (lhs.cols() == rhs.rows() && "invalid matrix product" && "if you wanted a coeff-wise or a dot product use the respective explicit functions"), function Product, file Product.h, line 98.

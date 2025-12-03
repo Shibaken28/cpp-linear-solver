@@ -3,7 +3,6 @@
 #include "common/cholesky.hpp"
 
 using namespace std;
-#include <iomanip>
 #include <iostream>
 #include <vector>
 
@@ -11,7 +10,8 @@ using namespace std;
 
 MatrixXd block_bicgstab_preprocessing(const SparseMatrix<double>& A,
                                       const MatrixXd& B, MatrixXd X,
-                                      int max_iter = 1000, double tol = 1e-15) {
+                                      int max_iter, double tol,
+                                      vector<double>& res_norms) {
     MatrixXd R = B - A * X;
     MatrixXd P = R;
     MatrixXd R_hat_zero = R;
@@ -22,8 +22,8 @@ MatrixXd block_bicgstab_preprocessing(const SparseMatrix<double>& A,
     Eigen::IncompleteLUT<float> preconditioner;
 
     // パラメータ設定 (fillfactor: 非ゼロ要素の充填率, droptol: 切り捨て閾値)
-    preconditioner.setFillfactor(7);
-    preconditioner.setDroptol(1e-4);
+    preconditioner.setFillfactor(3);
+    preconditioner.setDroptol(1e-2);
 
     Eigen::SparseMatrix<float> A_float = A.cast<float>();
 
@@ -34,7 +34,7 @@ MatrixXd block_bicgstab_preprocessing(const SparseMatrix<double>& A,
         cerr << "ILU分解に失敗しました" << endl;
         return X;
     }
-    vector<double> res_norms;
+    res_norms.clear();
 
     double b_norm = B.norm();
     if (b_norm == 0.0) b_norm = 1.0;
@@ -89,22 +89,14 @@ MatrixXd block_bicgstab_preprocessing(const SparseMatrix<double>& A,
         // 10. P_{k+1} = R_{k+1} + (P_k - zeta*AP_k)*beta
         P = R + (P - zeta * AKP) * beta;
     }
-
-    // 残差を出す
-    auto R1 = B - A * X;
-    double rel_res_norm = R1.norm() / B.norm();
-    cout << "反復回数: " << res_norms.size() - 1
-         << ", ||B-AX||/||B|| = " << scientific << setprecision(6)
-         << rel_res_norm << endl;
-
     return X;
 }
 
 // 前処理付きBlock BiCGSTAB法 + QR分解による安定化
 MatrixXd block_bicgstab_preprocessing_rq(const SparseMatrix<double>& A,
                                          const MatrixXd& B, MatrixXd X,
-                                         int max_iter = 1000,
-                                         double tol = 1e-15) {
+                                         int max_iter, double tol,
+                                         vector<double>& res_norms) {
     MatrixXd R0 = B - A * X;
     MatrixXd R, eta;
     CholeskyQR(R0, R, eta);
@@ -116,12 +108,12 @@ MatrixXd block_bicgstab_preprocessing_rq(const SparseMatrix<double>& A,
     Eigen::IncompleteLUT<float> preconditioner;
 
     // パラメータ設定 (fillfactor: 非ゼロ要素の充填率, droptol: 切り捨て閾値)
-    preconditioner.setFillfactor(7);
-    preconditioner.setDroptol(1e-4);
+    preconditioner.setFillfactor(3);
+    preconditioner.setDroptol(1e-2);
     Eigen::SparseMatrix<float> A_float = A.cast<float>();
     preconditioner.compute(A_float);
 
-    vector<double> res_norms;
+    res_norms.clear();
 
     double b_norm = B.norm();
     if (b_norm == 0.0) b_norm = 1.0;
@@ -167,8 +159,6 @@ MatrixXd block_bicgstab_preprocessing_rq(const SparseMatrix<double>& A,
         MatrixXd R0_tilde_T_AP = R0_tilde.transpose() * AKP;
         MatrixXd R0_tilde_T_R1 = R0_tilde.transpose() * R1;
         MatrixXd beta = (R0_tilde_T_AP * zeta).lu().solve(R0_tilde_T_R1);
-        // MatrixXd beta = MatrixXd(R0_tilde_T_AP *
-        // zeta).fullPivLu().solve(R0_tilde_T_R1);
 
         P = R1 + (P - zeta * AKP) * beta;
         R = R1;
@@ -180,11 +170,5 @@ MatrixXd block_bicgstab_preprocessing_rq(const SparseMatrix<double>& A,
             break;
         }
     }
-
-    // --- 検算 ---
-    double final_res_norm = (B - A * X).norm();
-    cerr << "反復回数: " << res_norms.size()
-         << " 真の残差 ||B - AX||: " << scientific << setprecision(6)
-         << final_res_norm / b_norm << endl;
     return X;
 }
