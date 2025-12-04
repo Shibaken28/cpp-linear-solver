@@ -45,6 +45,16 @@ int main(int argc, char* argv[]) {
         }
         {
             vector<double> res_norms;
+            cout << "Block BiCGSTAB法 + 不完全コレスキー分解前処理" << endl;
+            auto X = block_bicgstab_preprocessing(
+                A, B, MatrixXd::Zero(A.cols(), col), 3000, 1e-10, res_norms);
+            cout << "反復回数: " << res_norms.size() - 1 << endl;
+            double error = (A * X - B).norm() / B.norm();
+            cout << "相対誤差: ||B-AX||/||B|| = " << error << endl;
+            cout << endl;
+        }
+        {
+            vector<double> res_norms;
             cout << "Block BiCGSTAB法 + 不完全コレスキー分解前処理 + "
                     "QR分解安定化"
                  << endl;
@@ -57,12 +67,38 @@ int main(int argc, char* argv[]) {
         }
         {
             vector<double> res_norms;
+            cout << "Block BiCGSTAB法 + 可変前処理"
+                    "内部反復50回or1e-5誤差"
+                 << endl;
+            auto X = block_bicgstab_dynamic_preprocessing(
+                A, B, MatrixXd::Zero(A.cols(), col), 3000, 1e-10, res_norms, 50,
+                1e-5);
+            cout << "反復回数: " << res_norms.size() - 1 << endl;
+            double error = (A * X - B).norm() / B.norm();
+            cout << "相対誤差: ||B-AX||/||B|| = " << error << endl;
+            cout << endl;
+        }
+        {
+            vector<double> res_norms;
             cout << "Block BiCGSTAB法 + 可変前処理 + QR分解安定化 "
-                    "内部反復100回or1e-5誤差"
+                    "内部反復10回or1e-5誤差"
                  << endl;
             auto X = block_bicgstab_dynamic_preprocessing_rq(
-                A, B, MatrixXd::Zero(A.cols(), col), 3000, 1e-10, res_norms,
-                100, 1e-5);
+                A, B, MatrixXd::Zero(A.cols(), col), 3000, 1e-10, res_norms, 10,
+                1e-5);
+            cout << "反復回数: " << res_norms.size() - 1 << endl;
+            double error = (A * X - B).norm() / B.norm();
+            cout << "相対誤差: ||B-AX||/||B|| = " << error << endl;
+            cout << endl;
+        }
+        {
+            vector<double> res_norms;
+            cout << "Block BiCGSTAB法 + 可変前処理 + QR分解安定化 "
+                    "内部反復50回or1e-5誤差"
+                 << endl;
+            auto X = block_bicgstab_dynamic_preprocessing_rq(
+                A, B, MatrixXd::Zero(A.cols(), col), 3000, 1e-10, res_norms, 50,
+                1e-5);
             cout << "反復回数: " << res_norms.size() - 1 << endl;
             double error = (A * X - B).norm() / B.norm();
             cout << "相対誤差: ||B-AX||/||B|| = " << error << endl;
@@ -85,10 +121,21 @@ int main(int argc, char* argv[]) {
 }
 
 /*
+内部でもqr安定化するように
+
+
 色々試した結果
+
 
 可変前処理が全然安定せず，発散してしまう
 内部の反復回数を増やすと正しい答えは出るがそれは前処理を使わないのと同じ意味になってしまう
 
 列数が増えると収束が早くなるから，前処理でほぼ答えが得られる
+
+
+前処理で1本ずつ解いてみるとどうなる？
+-> うまくいけばglobal krylov
+
+
+メールをかえす
 */
