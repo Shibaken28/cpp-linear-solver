@@ -47,3 +47,7 @@ MatrixXd block_bicgstab_dynamic_preprocessing(
 MatrixXd block_bicgstab_dynamic_preprocessing_rq(
     const SparseMatrix<double>& A, const MatrixXd& B, MatrixXd X, int max_iter,
     double tol, vector<double>& res_norms, int inner_max_iter, float inner_tol);
+// 可変前処理(反復法のネスト)付き，内部で1本ずつ解く版，かつQR分解による安定化
+MatrixXd block_bicgstab_dynamic_preprocessing_rq_single(
+    const SparseMatrix<double>& A, const MatrixXd& B, MatrixXd X, int max_iter,
+    double tol, vector<double>& res_norms, int inner_max_iter, float inner_tol);

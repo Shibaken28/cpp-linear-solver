@@ -12,7 +12,7 @@ EIGEN_PATH = $(shell brew --prefix eigen)
 # 2. Eigenのディレクトリ (brewのパス/include/eigen3)
 INCLUDES = -Isrc -I$(EIGEN_PATH)/include/eigen3
 
-CXXFLAGS = -Wall -O2 -std=c++17 -fopenmp $(INCLUDES)
+CXXFLAGS = -Wall -O2 -std=c++17 $(INCLUDES)
 
 SRC_DIR = src
 OBJ_DIR = obj

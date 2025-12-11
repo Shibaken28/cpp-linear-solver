@@ -1,3 +1,4 @@
+#include "algo/bicgstab.hpp"
 #include "algo/block_bicgstab.hpp"
 #include "common/cholesky.hpp"
 
@@ -146,6 +147,109 @@ MatrixXd block_bicgstab_dynamic_preprocessing_rq(const SparseMatrix<double>& A,
         MatrixXd K_inv_T =
             block_bicgstab_rq(A, T, MatrixXd::Zero(A.cols(), T.cols()),
                               inner_max_iter, inner_tol, dummy_res_norms);
+        MatrixXd AKT = A * K_inv_T;
+
+        // 5. zetaの計算
+        MatrixXd Teta = T * eta;
+        MatrixXd ATeta = AKT * eta;
+        double tr_AT_T = (ATeta.array() * Teta.array()).sum();
+        double tr_AT_AT = (ATeta.array() * ATeta.array()).sum();
+        double zeta = (tr_AT_AT != 0.0) ? (tr_AT_T / tr_AT_AT) : 0.0;
+
+        // Xの更新
+        X += (K_inv_P * alpha + zeta * K_inv_T) * eta;
+
+        // R tauの計算
+        MatrixXd R1;  // 次のR
+        MatrixXd tau;
+        MatrixXd t = T - zeta * A * K_inv_T;
+        if (!CholeskyQR(t, R1, tau)) {
+            break;
+        }
+
+        // betaの計算
+        MatrixXd R0_tilde_T_AP = R0_tilde.transpose() * AKP;
+        MatrixXd R0_tilde_T_R1 = R0_tilde.transpose() * R1;
+        MatrixXd beta = (R0_tilde_T_AP * zeta).lu().solve(R0_tilde_T_R1);
+
+        P = R1 + (P - zeta * AKP) * beta;
+        R = R1;
+        eta = tau * eta;
+
+        double eta_norm = eta.norm();
+        res_norms.push_back(eta_norm / b_norm);
+        if (eta_norm / b_norm < tol) {
+            break;
+        }
+        // あまりにも発散している場合(最初のres_normの1e4倍以上)は終了
+        if (res_norms.back() > res_norms[0] * 1e4) {
+            cerr << "発散を検出したため終了します。" << endl;
+            break;
+        }
+    }
+
+    return X;
+}
+
+// 内部で1本ずつ解く版
+MatrixXd block_bicgstab_dynamic_preprocessing_rq_single(
+    const SparseMatrix<double>& A, const MatrixXd& B, MatrixXd X, int max_iter,
+    double tol, vector<double>& res_norms, int inner_max_iter,
+    float inner_tol) {
+    MatrixXd R0 = B - A * X;
+    MatrixXd R, eta;
+    if (!CholeskyQR(R0, R, eta)) {
+        return X;
+    }
+    MatrixXd R0_tilde = R0;
+    MatrixXd P = R;
+
+    Eigen::SparseMatrix<float> A_float = A.cast<float>();
+
+    res_norms.clear();
+
+    double b_norm = B.norm();
+    if (b_norm == 0.0) b_norm = 1.0;
+
+    res_norms.push_back(eta.norm() / b_norm);
+
+    vector<double> dummy_res_norms;
+    for (int i = 0; i < max_iter; i++) {
+        // APを計算
+        // 前処理のために，K^{-1}Pを計算
+        // K^-1の代わりにA^{-1}だと思うと，
+        // Az = P と解くと z = A^{-1}P になる
+        // ここでPを1列ずつ解くことにする
+        MatrixXd K_inv_P(A.rows(), P.cols());
+        for (int col = 0; col < P.cols(); col++) {
+            VectorXd p_col = P.col(col);
+            VectorXd k_inv_p_col =
+                bicgstab(A, p_col, VectorXd::Zero(A.cols()), inner_max_iter,
+                         inner_tol, dummy_res_norms);
+            K_inv_P.col(col) = k_inv_p_col;
+        }
+        MatrixXd AKP = A * K_inv_P;
+
+        // alphaの計算
+        MatrixXd R0_tilde_T_A_P = R0_tilde.transpose() * AKP;
+        MatrixXd R0_tilde_R = R0_tilde.transpose() * R;
+        MatrixXd alpha = R0_tilde_T_A_P.lu().solve(R0_tilde_R);
+        // MatrixXd alpha =
+        // MatrixXd(R0_tilde_T_A_P).fullPivLu().solve(R0_tilde_R);
+
+        // Tの計算
+        MatrixXd T = R - AKP * alpha;
+
+        // ATの計算
+        // ここでTを1列ずつ解くことにする
+        MatrixXd K_inv_T(A.rows(), T.cols());
+        for (int col = 0; col < T.cols(); col++) {
+            VectorXd t_col = T.col(col);
+            VectorXd k_inv_t_col =
+                bicgstab(A, t_col, VectorXd::Zero(A.cols()), inner_max_iter,
+                         inner_tol, dummy_res_norms);
+            K_inv_T.col(col) = k_inv_t_col;
+        }
         MatrixXd AKT = A * K_inv_T;
 
         // 5. zetaの計算

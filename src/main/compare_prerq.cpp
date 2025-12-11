@@ -45,34 +45,11 @@ int main(int argc, char* argv[]) {
         }
         {
             vector<double> res_norms;
-            cout << "Block BiCGSTAB法 + 不完全コレスキー分解前処理" << endl;
-            auto X = block_bicgstab_preprocessing(
-                A, B, MatrixXd::Zero(A.cols(), col), 3000, 1e-10, res_norms);
-            cout << "反復回数: " << res_norms.size() - 1 << endl;
-            double error = (A * X - B).norm() / B.norm();
-            cout << "相対誤差: ||B-AX||/||B|| = " << error << endl;
-            cout << endl;
-        }
-        {
-            vector<double> res_norms;
             cout << "Block BiCGSTAB法 + 不完全コレスキー分解前処理 + "
                     "QR分解安定化"
                  << endl;
             auto X = block_bicgstab_preprocessing_rq(
                 A, B, MatrixXd::Zero(A.cols(), col), 3000, 1e-10, res_norms);
-            cout << "反復回数: " << res_norms.size() - 1 << endl;
-            double error = (A * X - B).norm() / B.norm();
-            cout << "相対誤差: ||B-AX||/||B|| = " << error << endl;
-            cout << endl;
-        }
-        {
-            vector<double> res_norms;
-            cout << "Block BiCGSTAB法 + 可変前処理"
-                    "内部反復50回or1e-5誤差"
-                 << endl;
-            auto X = block_bicgstab_dynamic_preprocessing(
-                A, B, MatrixXd::Zero(A.cols(), col), 3000, 1e-10, res_norms, 50,
-                1e-5);
             cout << "反復回数: " << res_norms.size() - 1 << endl;
             double error = (A * X - B).norm() / B.norm();
             cout << "相対誤差: ||B-AX||/||B|| = " << error << endl;
@@ -117,6 +94,45 @@ int main(int argc, char* argv[]) {
             cout << "相対誤差: ||B-AX||/||B|| = " << error << endl;
             cout << endl;
         }
+        {
+            vector<double> res_norms;
+            cout << "Block BiCGSTAB法 + 可変前処理 + QR分解安定化 + "
+                    "1本ずつ解く版, 内部反復10回or1e-5誤差"
+                 << endl;
+            auto X = block_bicgstab_dynamic_preprocessing_rq_single(
+                A, B, MatrixXd::Zero(A.cols(), col), 3000, 1e-10, res_norms, 10,
+                1e-5);
+            cout << "反復回数: " << res_norms.size() - 1 << endl;
+            double error = (A * X - B).norm() / B.norm();
+            cout << "相対誤差: ||B-AX||/||B|| = " << error << endl;
+            cout << endl;
+        }
+        {
+            vector<double> res_norms;
+            cout << "Block BiCGSTAB法 + 可変前処理 + QR分解安定化 + "
+                    "1本ずつ解く版, 内部反復50回or1e-5誤差"
+                 << endl;
+            auto X = block_bicgstab_dynamic_preprocessing_rq_single(
+                A, B, MatrixXd::Zero(A.cols(), col), 3000, 1e-10, res_norms, 50,
+                1e-5);
+            cout << "反復回数: " << res_norms.size() - 1 << endl;
+            double error = (A * X - B).norm() / B.norm();
+            cout << "相対誤差: ||B-AX||/||B|| = " << error << endl;
+            cout << endl;
+        }
+        {
+            vector<double> res_norms;
+            cout << "Block BiCGSTAB法 + 可変前処理 + QR分解安定化 + "
+                    "1本ずつ解く版, 内部反復300回or1e-5誤差"
+                 << endl;
+            auto X = block_bicgstab_dynamic_preprocessing_rq_single(
+                A, B, MatrixXd::Zero(A.cols(), col), 3000, 1e-10, res_norms,
+                300, 1e-5);
+            cout << "反復回数: " << res_norms.size() - 1 << endl;
+            double error = (A * X - B).norm() / B.norm();
+            cout << "相対誤差: ||B-AX||/||B|| = " << error << endl;
+            cout << endl;
+        }
     }
 }
 
@@ -138,4 +154,5 @@ int main(int argc, char* argv[]) {
 
 
 メールをかえす
+わーくすてーしょんのoptしたにある
 */
